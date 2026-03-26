@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 13px; padding: 12px; }
+    h2 { font-size: 15px; margin-bottom: 12px; }
+    button {
+      background: #1a73e8; color: white; border: none;
+      padding: 8px 16px; border-radius: 4px; cursor: pointer; width: 100%;
+      font-size: 13px;
+    }
+    button:hover { background: #1558b0; }
+    #result { margin-top: 16px; }
+    .speaker { margin-bottom: 16px; }
+    .speaker-name { font-weight: bold; margin-bottom: 4px; }
+    .total { color: #555; font-size: 12px; margin-bottom: 6px; }
+    .filler-row { display: flex; align-items: center; margin: 3px 0; }
+    .filler-label { width: 80px; font-size: 12px; }
+    .filler-count { width: 36px; text-align: right; font-size: 12px; color: #333; }
+    .bar-wrap { flex: 1; margin-left: 8px; background: #eee; border-radius: 2px; height: 10px; }
+    .bar { background: #1a73e8; height: 10px; border-radius: 2px; }
+    .grand-total { border-top: 1px solid #ddd; padding-top: 10px; font-weight: bold; }
+    .no-filler { color: #888; font-size: 12px; }
+    #loading { display: none; color: #888; margin-top: 10px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h2>フィラーカウンター</h2>
+  <button onclick="analyze()">ドキュメントを分析</button>
+  <div id="loading">分析中...</div>
+  <div id="result"></div>
+
+  <script>
+    function analyze() {
+      document.getElementById("result").innerHTML = "";
+      document.getElementById("loading").style.display = "block";
+      google.script.run
+        .withSuccessHandler(showResult)
+        .withFailureHandler(showError)
+        .analyzeDocument();
+    }
+
+    function showResult(data) {
+      document.getElementById("loading").style.display = "none";
+      const div = document.getElementById("result");
+
+      if (data.results.length === 0) {
+        div.innerHTML = '<p class="no-filler">フィラーは検出されませんでした。</p>';
+        return;
+      }
+
+      let maxCount = 0;
+      data.results.forEach(r => {
+        Object.values(r.counts).forEach(v => { if (v > maxCount) maxCount = v; });
+      });
+
+      let html = "";
+      let grandTotal = 0;
+
+      data.results.forEach(({ name, counts }) => {
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        grandTotal += total;
+        html += `<div class="speaker">`;
+        html += `<div class="speaker-name">【${escHtml(name)}】</div>`;
+        html += `<div class="total">合計: ${total}回</div>`;
+
+        if (total === 0) {
+          html += `<div class="no-filler">フィラーなし</div>`;
+        } else {
+          const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+          sorted.forEach(([filler, count]) => {
+            const pct = maxCount > 0 ? (count / maxCount * 100).toFixed(1) : 0;
+            html += `<div class="filler-row">
+              <span class="filler-label">${escHtml(filler)}</span>
+              <span class="filler-count">${count}回</span>
+              <div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div>
+            </div>`;
+          });
+        }
+        html += `</div>`;
+      });
+
+      if (data.mode === "speakers") {
+        html += `<div class="grand-total">全員合計: ${grandTotal}回</div>`;
+      }
+
+      div.innerHTML = html;
+    }
+
+    function showError(err) {
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("result").innerHTML =
+        `<p style="color:red">エラー: ${escHtml(String(err))}</p>`;
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+  </script>
+</body>
+</html>
