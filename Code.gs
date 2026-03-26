@@ -1,21 +1,31 @@
-const FILLERS_JA = [
-  "あー", "あの", "あのー", "あのう",
-  "いや", "いやー", "いやあ",
-  "うーん", "うん",
-  "えーと", "えと", "えっと","えー",
-  "じゃあ", "じゃー",
+const FILLERS = [
+  "あー",
+  "あの",
+  "あのー",
+  "あのう",
+  "いや",
+  "いやー",
+  "いやあ",
+  "うーん",
+  "うん",
+  "えーと",
+  "えと",
+  "えっと",
+  "えー",
+  "じゃあ",
+  "じゃー",
   "すー",
-  "そのー", "そのう",,
+  "そのー",
+  "そのう",
   "なんか",
-  "まあ", "まー",
-  "んー"
+  "まあ",
+  "まー",
+  "んー",
 ];
-const FILLERS_EN = ["um", "uh", "like", "you know", "so", "actually", "basically"];
-const ALL_FILLERS = [...FILLERS_JA, ...FILLERS_EN];
 
 function onOpen() {
   DocumentApp.getUi()
-    .createAddonMenu()
+    .createMenu("フィラーカウンター")
     .addItem("フィラーをカウント", "showSidebar")
     .addToUi();
 }
@@ -40,7 +50,7 @@ function analyzeDocument() {
 
   if (Object.keys(speakers).length === 0) {
     const counts = countFillers(text);
-    return { mode: "whole", results: [{ name: "全体", counts: counts }] };
+    return { results: [{ name: "全体", counts: counts }] };
   }
 
   const results = [];
@@ -48,7 +58,7 @@ function analyzeDocument() {
     const counts = countFillers(speech);
     results.push({ name, counts });
   }
-  return { mode: "speakers", results };
+  return { results };
 }
 
 function parseSpeakers(text) {
@@ -69,7 +79,7 @@ function parseSpeakers(text) {
 function countFillers(text) {
   const textLower = text.toLowerCase();
   const counts = {};
-  for (const filler of ALL_FILLERS) {
+  for (const filler of FILLERS) {
     const escaped = filler.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const found = (textLower.match(new RegExp(escaped, "g")) || []).length;
     if (found > 0) counts[filler] = found;

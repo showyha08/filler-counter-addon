@@ -26,26 +26,37 @@
   </style>
 </head>
 <body>
-  <h2>フィラーカウンター</h2>
-  <button onclick="analyze()">ドキュメントを分析</button>
-  <div id="loading">分析中...</div>
+  <button onclick="analyze()">再解析</button>
+  <div id="status" style="font-size:11px;color:#888;margin-top:6px;margin-bottom:8px;"></div>
   <div id="result"></div>
 
   <script>
+    let isRunning = false;
+
     function analyze() {
-      document.getElementById("result").innerHTML = "";
-      document.getElementById("loading").style.display = "block";
+      if (isRunning) return;
+      isRunning = true;
+      document.getElementById("status").textContent = "解析中...";
       google.script.run
-        .withSuccessHandler(showResult)
-        .withFailureHandler(showError)
+        .withSuccessHandler(function(data) {
+          isRunning = false;
+          document.getElementById("status").textContent = "";
+          showResult(data);
+        })
+        .withFailureHandler(function(err) {
+          isRunning = false;
+          showError(err);
+          isRunning = false;
+        })
         .analyzeDocument();
     }
 
+    analyze();
+
     function showResult(data) {
-      document.getElementById("loading").style.display = "none";
       const div = document.getElementById("result");
 
-      if (data.results.length === 0) {
+      if (!data || !data.results || data.results.length === 0) {
         div.innerHTML = '<p class="no-filler">フィラーは検出されませんでした。</p>';
         return;
       }
@@ -56,11 +67,15 @@
       });
 
       let html = "";
-      let grandTotal = 0;
 
-      data.results.forEach(({ name, counts }) => {
+      const sorted = data.results.slice().sort((a, b) => {
+        const totalA = Object.values(a.counts).reduce((s, v) => s + v, 0);
+        const totalB = Object.values(b.counts).reduce((s, v) => s + v, 0);
+        return totalB - totalA;
+      });
+
+      sorted.forEach(({ name, counts }) => {
         const total = Object.values(counts).reduce((a, b) => a + b, 0);
-        grandTotal += total;
         html += `<div class="speaker">`;
         html += `<div class="speaker-name">【${escHtml(name)}】</div>`;
         html += `<div class="total">合計: ${total}回</div>`;
@@ -68,8 +83,8 @@
         if (total === 0) {
           html += `<div class="no-filler">フィラーなし</div>`;
         } else {
-          const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-          sorted.forEach(([filler, count]) => {
+          const fillersSorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+          fillersSorted.forEach(([filler, count]) => {
             const pct = maxCount > 0 ? (count / maxCount * 100).toFixed(1) : 0;
             html += `<div class="filler-row">
               <span class="filler-label">${escHtml(filler)}</span>
@@ -81,17 +96,12 @@
         html += `</div>`;
       });
 
-      if (data.mode === "speakers") {
-        html += `<div class="grand-total">全員合計: ${grandTotal}回</div>`;
-      }
-
       div.innerHTML = html;
     }
 
     function showError(err) {
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("result").innerHTML =
-        `<p style="color:red">エラー: ${escHtml(String(err))}</p>`;
+      document.getElementById("status").textContent = "エラー: " + String(err);
+      document.getElementById("status").style.color = "red";
     }
 
     function escHtml(s) {
