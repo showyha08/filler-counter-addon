@@ -4,7 +4,7 @@
 
 ## 利用条件
 
-本アドオンは、Google ドキュメント上でフィラーワードをカウントする機能を無償で提供します。
+本アドオンは、Google ドキュメント™上でフィラーワードをカウントする機能を無償で提供します。
 
 ## 免責事項
 
@@ -26,3 +26,7 @@
 
 ご質問は以下の Issue よりお問い合わせください。
 https://github.com/showyha08/filler-counter-addon/issues
+
+---
+
+Google Docs™、Google Apps Script™ は Google LLC の商標です。
