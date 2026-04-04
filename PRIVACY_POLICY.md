@@ -20,3 +20,7 @@
 
 プライバシーポリシーに関するご質問は、以下の Issue よりお問い合わせください。
 https://github.com/showyha08/filler-counter-addon/issues
+
+---
+
+Google Docs™、Google Apps Script™ は Google LLC の商標です。
