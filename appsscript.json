@@ -4,14 +4,17 @@
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
   "oauthScopes": [
-    "https://www.googleapis.com/auth/documents.currentonly",
-    "https://www.googleapis.com/auth/script.container.ui"
+    "https://www.googleapis.com/auth/documents.currentonly"
   ],
   "addOns": {
     "common": {
       "name": "フィラーカウンター",
       "logoUrl": "https://raw.githubusercontent.com/showyha08/filler-counter-addon/main/filler_counter_logo.png"
     },
-    "docs": {}
+    "docs": {
+      "homepageTrigger": {
+        "runFunction": "onDocsHomepage"
+      }
+    }
   }
 }
